@@ -264,26 +264,24 @@ function speak(text, onend) {
   try {
     if (!("speechSynthesis" in window)) return finish();
     const ss = speechSynthesis;
-    const go = () => {
-      try {
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = "en-US"; u.rate = mem.rate; u.volume = 1;
-        const vs = ss.getVoices();
-        const v = vs.find(v => /^en[-_]US/i.test(v.lang) && v.localService) || vs.find(v => /^en[-_]US/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang));
-        if (v && !IOS) u.voice = v;
-        u.onend = finish; u.onerror = finish;
-        window.__utt = u;
-        ss.speak(u);
-        try { ss.resume(); } catch (e) {}
-        setTimeout(finish, Math.max(2500, text.length * 110));
-      } catch (e) { finish(); }
-    };
-    if (ss.speaking || ss.pending) { ss.cancel(); setTimeout(go, 120); } else go();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US"; u.volume = 1; u.rate = mem.rate;
+    if (!IOS) {
+      const vs = ss.getVoices();
+      const v = vs.find(v => /^en[-_]US/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang));
+      if (v) u.voice = v;
+    }
+    u.onend = finish; u.onerror = finish;
+    window.__utt = u;
+    if (ss.speaking || ss.pending) ss.cancel();
+    ss.speak(u);
+    try { ss.resume(); } catch (e) {}
+    setTimeout(finish, Math.max(2500, text.length * 110));
   } catch (e) { finish(); }
 }
 const IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 function soundTest() {
-  const out = $("sndMsg"), log = ["v3", window.navigator.standalone ? "mở từ MH chính" : "mở trong trình duyệt"];
+  const out = $("sndMsg"), log = ["v4", window.navigator.standalone ? "mở từ MH chính" : "mở trong trình duyệt"];
   const show = () => { out.textContent = log.join(" · "); };
   try {
     const AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
@@ -307,15 +305,6 @@ function soundTest() {
   } catch (e) { log.push("đọc lỗi: " + e.message); }
   show();
 }
-function unlockSpeech() {
-  try {
-    const ss = speechSynthesis;
-    if (ss.speaking || ss.pending) return;
-    const u = new SpeechSynthesisUtterance(" "); u.volume = 0; u.lang = "en-US";
-    ss.speak(u);
-  } catch (e) {}
-}
-document.addEventListener("click", unlockSpeech, { once: true });
 
 /* ---------- Nhận giọng nói ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -555,6 +544,7 @@ function rpSystem() {
 function addMsg(who, text, sub) {
   const m = el("div", "msg " + who, text);
   if (sub) m.appendChild(el("small", "", sub));
+  if (who === "ai") m.onclick = () => speak(text);
   $("chat").appendChild(m); m.scrollIntoView({ block: "nearest" });
 }
 async function rpTurn(userText) {
