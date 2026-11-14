@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>English Reflex – Luyện phản xạ tiếng Anh</title>
+<style>
+  :root {
+    --bg: #f4f1ea; --card: #fffdf8; --ink: #1f2a2e; --muted: #6b7478;
+    --line: #ddd6c8; --accent: #0f6b5c; --accent-ink: #ffffff;
+    --good: #1d7a3e; --bad: #b3401f; --warn: #8a6100; --soft: #e8f1ee;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12181a; --card: #1b2326; --ink: #e9ece8; --muted: #9aa5a8;
+      --line: #2e3a3e; --accent: #4fc3ad; --accent-ink: #0c1917;
+      --good: #6fd08f; --bad: #f08a6a; --warn: #e3b955; --soft: #20302d;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px 6px; max-width: 640px; margin: 0 auto;
+  }
+  header h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+  header h1 span { color: var(--accent); }
+  main { max-width: 640px; margin: 0 auto; padding: 8px 16px 48px; }
+  nav { display: flex; gap: 6px; margin: 8px 0 14px; }
+  nav button {
+    flex: 1; padding: 10px 6px; border: 1px solid var(--line); background: transparent;
+    color: var(--muted); border-radius: 10px; font: inherit; font-size: 14px; font-weight: 600;
+  }
+  nav button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .card h2 { font-size: 16px; margin: 0 0 8px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .q { font-size: 26px; line-height: 1.25; font-weight: 700; margin: 6px 0 4px; text-wrap: balance; }
+  .vi { color: var(--muted); font-size: 14px; }
+  button.btn {
+    font: inherit; font-weight: 600; padding: 12px 16px; border-radius: 10px;
+    border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink);
+    min-height: 46px;
+  }
+  button.btn.ghost { background: transparent; color: var(--accent); }
+  button.btn:disabled { opacity: 0.5; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .row > .grow { flex: 1; min-width: 0; }
+  input[type=text], input[type=password], select, textarea {
+    width: 100%; font: inherit; padding: 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 4px; }
+  .mic { width: 56px; min-width: 56px; padding: 0; font-size: 22px; }
+  .mic.on { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .verdict { font-weight: 700; margin-top: 12px; }
+  .verdict.good { color: var(--good); } .verdict.bad { color: var(--bad); } .verdict.warn { color: var(--warn); }
+  .fix { background: var(--soft); border-radius: 10px; padding: 10px 12px; margin-top: 8px; }
+  .fix b { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat { display: flex; gap: 10px; margin-top: 6px; }
+  .stat div { flex: 1; background: var(--soft); border-radius: 10px; padding: 10px; text-align: center; }
+  .stat strong { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 12px; color: var(--muted); }
+  ul.sent { list-style: none; margin: 8px 0 0; padding: 0; }
+  ul.sent li { border-top: 1px solid var(--line); padding: 10px 0; display: flex; gap: 10px; align-items: center; }
+  ul.sent li .grow { flex: 1; min-width: 0; }
+  ul.sent li .en { font-weight: 600; overflow-wrap: anywhere; }
+  .icon { border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 10px; min-width: 44px; height: 44px; font-size: 18px; }
+  .badge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--soft); white-space: nowrap; }
+  .chat { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+  .msg { padding: 10px 12px; border-radius: 12px; max-width: 88%; overflow-wrap: anywhere; }
+  .msg.ai { background: var(--soft); align-self: flex-start; }
+  .msg.me { background: var(--accent); color: var(--accent-ink); align-self: flex-end; }
+  .msg small { display: block; margin-top: 6px; opacity: 0.85; font-size: 13px; }
+  .err { color: var(--bad); font-size: 14px; margin-top: 8px; overflow-wrap: anywhere; }
+  .hidden { display: none !important; }
+  .progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
+  .progress i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+  @media (prefers-reduced-motion: reduce) { .progress i { transition: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>English <span>Reflex</span></h1>
+  <button class="icon" id="btnSettings" aria-label="Cài đặt">⚙</button>
+</header>
+<main>
+  <section class="card hidden" id="settings">
+    <h2>Cài đặt</h2>
+    <p class="muted">Lấy API key miễn phí tại Google AI Studio (aistudio.google.com → Get API key). Key chỉ lưu trên máy này.</p>
+    <label for="key">Gemini API key</label>
+    <input type="password" id="key" autocomplete="off" placeholder="Dán API key vào đây">
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="btnTest">Kiểm tra key và tải model</button>
+    </div>
+    <label for="model">Model</label>
+    <select id="model"><option value="">(chưa tải danh sách)</option></select>
+    <label for="rate">Tốc độ đọc: <span id="rateVal">0.9</span></label>
+    <input type="range" id="rate" min="0.6" max="1.2" step="0.05" value="0.9" style="width:100%">
+    <div class="err" id="setMsg"></div>
+    <div class="row" style="margin-top:12px"><button class="btn ghost" id="btnCloseSet">Xong</button></div>
+  </section>
+
+  <nav role="tablist">
+    <button role="tab" data-tab="reflex" aria-selected="true">Phản xạ</button>
+    <button role="tab" data-tab="lesson" aria-selected="false">Bài hôm nay</button>
+    <button role="tab" data-tab="role" aria-selected="false">Đóng vai</button>
+  </nav>
+
+  <!-- PHẢN XẠ -->
+  <section id="tab-reflex">
+    <div class="card" id="rxStart">
+      <h2>Vòng nhanh 8 câu</h2>
+      <p class="muted">Máy đọc câu hỏi. Anh trả lời ngay, không dừng lại nghĩ. Mục tiêu: bắt đầu trả lời trong 3 giây.</p>
+      <div class="stat">
+        <div><strong id="stBest">–</strong><span>điểm cao nhất</span></div>
+        <div><strong id="stRounds">0</strong><span>vòng đã luyện</span></div>
+        <div><strong id="stStreak">0</strong><span>ngày liên tiếp</span></div>
+      </div>
+      <div class="row" style="margin-top:14px"><button class="btn grow" id="btnRxGo">Bắt đầu</button></div>
+      <p class="muted" id="rxWeak" style="margin-top:10px"></p>
+    </div>
+    <div class="card hidden" id="rxPlay">
+      <div class="progress"><i id="rxBar"></i></div>
+      <div class="muted" id="rxCount"></div>
+      <div class="q" id="rxQ"></div>
+      <div class="vi" id="rxVi"></div>
+      <div class="row" style="margin-top:14px">
+        <input type="text" class="grow" id="rxIn" placeholder="Nói hoặc gõ câu trả lời" autocomplete="off" autocapitalize="sentences">
+        <button class="btn mic" id="rxMic" aria-label="Micro">🎤</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn grow" id="rxSend">Trả lời</button>
+        <button class="btn ghost" id="rxHear" aria-label="Nghe lại câu hỏi">🔊</button>
+      </div>
+      <div id="rxOut"></div>
+      <div class="row hidden" id="rxNextRow" style="margin-top:12px"><button class="btn grow" id="rxNext">Câu tiếp</button></div>
+    </div>
+    <div class="card hidden" id="rxEnd">
+      <h2>Kết quả</h2>
+      <div class="stat">
+        <div><strong id="endScore">0/8</strong><span>câu đạt</span></div>
+        <div><strong id="endLat">–</strong><span>giây phản xạ TB</span></div>
+      </div>
+      <p class="muted" id="endWeak" style="margin-top:10px"></p>
+      <div class="row" style="margin-top:12px"><button class="btn grow" id="rxAgain">Luyện vòng nữa</button></div>
+    </div>
+  </section>
+
+  <!-- BÀI HÔM NAY -->
+  <section id="tab-lesson" class="hidden">
+    <div class="card">
+      <label for="day" style="margin-top:0">Chọn ngày</label>
+      <select id="day"></select>
+      <p class="muted" id="lsHint" style="margin-top:8px">Bấm 🔊 để nghe, bấm 🎤 để nói lại. Máy chấm theo số từ nghe được.</p>
+      <ul class="sent" id="lsList"></ul>
+    </div>
+  </section>
+
+  <!-- ĐÓNG VAI -->
+  <section id="tab-role" class="hidden">
+    <div class="card">
+      <h2>Đóng vai với đồng nghiệp nước ngoài</h2>
+      <p class="muted">Gemini đóng vai đồng nghiệp ở trung tâm cyclotron, hỏi mỗi lượt một câu ngắn theo chủ đề của ngày đang chọn, và sửa câu cho anh.</p>
+      <div class="chat" id="chat"></div>
+      <div class="row">
+        <input type="text" class="grow" id="rpIn" placeholder="Nói hoặc gõ câu trả lời" autocomplete="off">
+        <button class="btn mic" id="rpMic" aria-label="Micro">🎤</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn grow" id="rpSend">Gửi</button>
+        <button class="btn ghost" id="rpReset">Bắt đầu lại</button>
+      </div>
+      <div class="err" id="rpErr"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+/* ---------- Dữ liệu ---------- */
+const BANK = [
+  ["How are you today?", "I'm fine, thanks. And you?", "Hôm nay anh thế nào?"],
+  ["What do you do?", "I'm an engineer.", "Anh làm nghề gì?"],
+  ["Where do you work?", "I work at the Cyclotron Center.", "Anh làm ở đâu?"],
+  ["What time does the run start?", "The run starts at 5 a.m.", "Mẻ chạy bắt đầu lúc mấy giờ?"],
+  ["Is the batch ready?", "Yes, batch 42 is ready.", "Lô hàng xong chưa?"],
+  ["Did you send the report?", "Yes, I sent it this morning.", "Anh gửi báo cáo chưa?"],
+  ["Are you busy now?", "Yes, I'm busy. Can we talk later?", "Anh đang bận không?"],
+  ["Can you help me?", "Sure. What do you need?", "Anh giúp tôi được không?"],
+  ["Where is the RSO?", "He is in the hot lab.", "Cán bộ an toàn bức xạ ở đâu?"],
+  ["When is the delivery?", "The courier arrives at 8.", "Khi nào giao hàng?"],
+  ["How many doses did the hospital order?", "Three doses.", "Bệnh viện đặt mấy liều?"],
+  ["What is the activity?", "The activity is 500 MBq.", "Hoạt độ bao nhiêu?"],
+  ["Is QC finished?", "Yes, QC is finished.", "Kiểm nghiệm xong chưa?"],
+  ["Can I speak to the manager?", "He is not here now. Can I take a message?", "Cho tôi gặp quản lý được không?"],
+  ["What's the problem?", "The printer doesn't work.", "Có vấn đề gì vậy?"],
+  ["Can we meet at 2?", "Yes, 2 is OK.", "Mình họp lúc 2 giờ được không?"],
+  ["When is the audit?", "The audit is next week.", "Khi nào kiểm toán?"],
+  ["Did you sign the logbook?", "Yes, I signed it.", "Anh ký sổ nhật ký chưa?"],
+  ["What did you do today?", "I checked emails and sent the orders.", "Hôm nay anh làm gì?"],
+  ["How was your weekend?", "It was good. I stayed home.", "Cuối tuần của anh thế nào?"],
+  ["Is there anything else?", "No, that's all. Thank you.", "Còn gì nữa không?"]
+];
+const DAYS = {
+  1: ["Chào hỏi", [["Good morning.","Chào buổi sáng."],["How are you?","Anh khỏe không?"],["I'm fine, thanks.","Tôi khỏe, cảm ơn."],["See you later.","Hẹn gặp lại."],["Have a good day.","Chúc một ngày tốt lành."]]],
+  2: ["Giới thiệu bản thân", [["My name is Nam.","Tên tôi là Nam (thay bằng tên anh)."],["I'm an engineer.","Tôi là kỹ sư."],["I work at the Cyclotron Center.","Tôi làm ở Trung tâm Cyclotron."],["We have a 30 MeV cyclotron.","Chúng tôi có máy cyclotron 30 MeV."],["I help with orders and reports.","Tôi phụ trách đơn hàng và báo cáo."]]],
+  3: ["Số và giờ", [["It's 8 o'clock.","Bây giờ là 8 giờ."],["The run starts at 5 a.m.","Mẻ chạy bắt đầu lúc 5 giờ sáng."],["Batch number 42.","Lô số 42."],["The half-life is 110 minutes.","Chu kỳ bán rã là 110 phút."],["Three doses.","Ba liều."]]],
+  4: ["Thứ ngày và lịch", [["Today is Monday.","Hôm nay là thứ Hai."],["Maintenance is on Friday.","Bảo dưỡng vào thứ Sáu."],["The audit is next week.","Kiểm toán vào tuần sau."],["I work from 8 to 5.","Tôi làm từ 8 giờ đến 5 giờ."],["I'm off on Sunday.","Chủ nhật tôi nghỉ."]]],
+  5: ["Xin nhắc lại", [["Sorry?","Xin lỗi, anh nói gì?"],["Can you say that again?","Anh nói lại được không?"],["Slower, please.","Xin nói chậm hơn."],["What does release mean?","Release nghĩa là gì?"],["I understand now.","Giờ tôi hiểu rồi."]]],
+  6: ["Khu vực trong nhà máy", [["This is the office.","Đây là văn phòng."],["The hot lab is downstairs.","Phòng hot lab ở tầng dưới."],["The clean room is there.","Phòng sạch ở kia."],["Don't enter now.","Đừng vào lúc này."],["Where is the RSO?","Cán bộ an toàn bức xạ ở đâu?"]]],
+  8: ["Nhờ giúp đỡ", [["Can you help me?","Anh giúp tôi được không?"],["I have a question.","Tôi có một câu hỏi."],["How do I do this?","Việc này làm thế nào?"],["Please show me.","Xin chỉ cho tôi."],["Thank you so much.","Cảm ơn anh rất nhiều."]]],
+  9: ["Xin phép", [["Can I leave early today?","Hôm nay tôi về sớm được không?"],["Can I take a day off on Friday?","Thứ Sáu tôi xin nghỉ một ngày được không?"],["May I use this room?","Tôi dùng phòng này được không?"],["Is it OK if I come at 9?","Tôi đến lúc 9 giờ có được không?"],["Sorry, I'm late.","Xin lỗi, tôi đến muộn."]]],
+  10: ["Báo việc đã xong", [["I sent the report.","Tôi đã gửi báo cáo."],["The order is done.","Đơn hàng đã xong."],["QC is finished.","Kiểm nghiệm đã xong."],["Batch 42 is released.","Lô 42 đã được xuất xưởng."],["I finished at 3 p.m.","Tôi xong lúc 3 giờ chiều."]]],
+  11: ["Bận hay rảnh", [["I'm busy now.","Tôi đang bận."],["Can we talk later?","Mình nói chuyện sau được không?"],["I'm free after lunch.","Sau bữa trưa tôi rảnh."],["Give me five minutes.","Cho tôi 5 phút."],["Yes, now is fine.","Được, bây giờ được."]]],
+  12: ["Điện thoại", [["Hello, this is Nam from the plant.","Xin chào, tôi là Nam ở nhà máy."],["Can I speak to Mr. Lee?","Cho tôi gặp ông Lee được không?"],["He is not here now.","Hiện anh ấy không có ở đây."],["Can I take a message?","Tôi ghi lại lời nhắn được không?"],["I'll call back later.","Tôi sẽ gọi lại sau."]]],
+  13: ["Tin nhắn và email", [["Please see the file attached.","Xin xem tệp đính kèm."],["The invoice is attached.","Hóa đơn được đính kèm."],["Can you confirm?","Anh xác nhận giúp được không?"],["Thank you for your email.","Cảm ơn email của anh."],["Best regards.","Trân trọng."]]],
+  15: ["Giao ca", [["The night shift starts at 10.","Ca đêm bắt đầu lúc 10 giờ."],["The run went well.","Mẻ chạy diễn ra tốt."],["Two batches are ready.","Hai lô đã sẵn sàng."],["One order is pending.","Còn một đơn đang chờ."],["Please sign the logbook.","Xin ký sổ nhật ký."]]],
+  16: ["Sự cố nhỏ", [["There is a problem.","Có một vấn đề."],["The printer doesn't work.","Máy in không chạy."],["The cyclotron stopped at 6.","Cyclotron dừng lúc 6 giờ."],["The courier is late.","Bên vận chuyển đến trễ."],["I will call maintenance.","Tôi sẽ gọi bảo dưỡng."]]],
+  17: ["Hẹn lịch", [["Can we meet at 2?","Mình gặp lúc 2 giờ được không?"],["Tuesday is OK for me.","Thứ Ba tôi được."],["Can we move it to Thursday?","Mình dời sang thứ Năm được không?"],["Sorry, I have to cancel.","Xin lỗi, tôi phải hủy."],["Let's meet next week.","Tuần sau mình gặp nhé."]]],
+  18: ["Giao hàng cho bệnh viện", [["The hospital ordered three doses.","Bệnh viện đặt ba liều."],["The courier arrives at 8.","Bên vận chuyển đến lúc 8 giờ."],["The delivery is on time.","Giao hàng đúng giờ."],["The activity is 500 MBq.","Hoạt độ là 500 MBq."],["Please check the release certificate.","Xin kiểm tra phiếu xuất xưởng."]]],
+  19: ["An toàn bức xạ", [["Wear your dosimeter badge.","Hãy đeo liều kế cá nhân."],["Don't enter the hot lab now.","Đừng vào hot lab lúc này."],["Wait for it to decay.","Chờ cho nó phân rã."],["Check for contamination.","Kiểm tra nhiễm bẩn."],["Call the RSO, please.","Xin gọi cán bộ an toàn bức xạ."]]],
+  20: ["Chuyện phiếm", [["How was your weekend?","Cuối tuần của anh thế nào?"],["It's hot today.","Hôm nay trời nóng."],["What do you want for lunch?","Trưa nay anh muốn ăn gì?"],["I like coffee.","Tôi thích cà phê."],["See you after lunch.","Hẹn gặp sau bữa trưa."]]],
+  22: ["Một ngày làm việc", [["I start at 8.","Tôi bắt đầu lúc 8 giờ."],["First I check emails.","Đầu tiên tôi kiểm tra email."],["Then I send the orders.","Sau đó tôi gửi đơn hàng."],["The run finishes at 7.","Mẻ chạy kết thúc lúc 7 giờ."],["I go home at 5.","Tôi về nhà lúc 5 giờ."]]],
+  23: ["Hướng dẫn đơn giản", [["Please sign here.","Xin ký vào đây."],["Put it in the box.","Đặt nó vào hộp."],["Don't touch this.","Đừng chạm vào cái này."],["Wait here, please.","Xin chờ ở đây."],["Follow me.","Đi theo tôi."]]],
+  24: ["Đón khách", [["Welcome to our plant.","Chào mừng đến nhà máy chúng tôi."],["Please wait a moment.","Xin chờ một chút."],["Would you like water?","Anh dùng nước không?"],["The manager is coming.","Quản lý đang đến."],["Here is your badge.","Thẻ của anh đây."]]],
+  25: ["Cuộc gọi từ bệnh viện", [["Thank you for calling.","Cảm ơn anh đã gọi."],["Your order is confirmed.","Đơn hàng của anh đã được xác nhận."],["Delivery is at 8 tomorrow.","Giao hàng lúc 8 giờ ngày mai."],["The dose is 10 millicuries.","Liều là 10 mCi."],["Is there anything else?","Còn gì nữa không?"]]],
+  26: ["Câu hỏi kiểm toán", [["Here is the logbook.","Sổ nhật ký đây."],["We follow the SOP.","Chúng tôi làm theo quy trình chuẩn."],["The license is valid.","Giấy phép còn hiệu lực."],["The RSO is Mr. Lee.","Cán bộ an toàn bức xạ là ông Lee (thay tên)."],["I will send the report today.","Hôm nay tôi sẽ gửi báo cáo."]]],
+  27: ["Kế hoạch và mục tiêu", [["Next month we have an audit.","Tháng sau chúng tôi có kiểm toán."],["I want to speak better English.","Tôi muốn nói tiếng Anh tốt hơn."],["I will practice every day.","Tôi sẽ luyện tập mỗi ngày."],["We will buy a new printer.","Chúng tôi sẽ mua máy in mới."],["The new target arrives in May.","Bia mới về vào tháng Năm."]]]
+};
+
+/* ---------- Tiện ích ---------- */
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("er_" + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("er_" + k, JSON.stringify(v)); } catch (e) {} }
+};
+const mem = { key: "", model: "", rate: 0.9 };
+function norm(s) { return String(s).toLowerCase().replace(/[^a-z0-9' ]+/g, " ").replace(/\s+/g, " ").trim(); }
+function lcsRatio(target, said) {
+  const a = norm(target).split(" "), b = norm(said).split(" ");
+  if (!a[0]) return 0;
+  const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+  return dp[a.length][b.length] / a.length;
+}
+function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+function today() { const d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+
+/* ---------- Giọng đọc ---------- */
+function speak(text, onend) {
+  let done = false;
+  const finish = () => { if (!done) { done = true; if (onend) onend(); } };
+  try {
+    if (!("speechSynthesis" in window)) return finish();
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US"; u.rate = mem.rate;
+    const v = speechSynthesis.getVoices().find(v => /^en[-_]US/i.test(v.lang)) || speechSynthesis.getVoices().find(v => /^en/i.test(v.lang));
+    if (v) u.voice = v;
+    u.onend = finish; u.onerror = finish;
+    speechSynthesis.speak(u);
+    setTimeout(finish, Math.max(2500, text.length * 110));
+  } catch (e) { finish(); }
+}
+
+/* ---------- Nhận giọng nói ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const canListen = !!SR && window.isSecureContext;
+let activeRec = null;
+function listen(micBtn, onText, onStart) {
+  if (!canListen) return;
+  if (activeRec) { try { activeRec.stop(); } catch (e) {} activeRec = null; return; }
+  try { speechSynthesis.cancel(); } catch (e) {}
+  const rec = new SR();
+  rec.lang = "en-US"; rec.interimResults = false; rec.maxAlternatives = 1;
+  rec.onstart = () => { micBtn.classList.add("on"); if (onStart) onStart(); };
+  rec.onresult = ev => { const t = ev.results[0] && ev.results[0][0] ? ev.results[0][0].transcript : ""; if (t) onText(t); };
+  rec.onerror = () => {};
+  rec.onend = () => { micBtn.classList.remove("on"); activeRec = null; };
+  activeRec = rec;
+  try { rec.start(); } catch (e) { activeRec = null; }
+}
+
+/* ---------- Gemini ---------- */
+const API = "https://generativelanguage.googleapis.com/v1beta/";
+async function gemini(system, contents, wantJson) {
+  if (!mem.key || !mem.model) throw new Error("Chưa có API key hoặc chưa chọn model. Mở ⚙ Cài đặt.");
+  const body = { contents, systemInstruction: { parts: [{ text: system }] }, generationConfig: { temperature: 0.4 } };
+  if (wantJson) body.generationConfig.responseMimeType = "application/json";
+  const res = await fetch(API + mem.model + ":generateContent", {
+    method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": mem.key }, body: JSON.stringify(body)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const m = data && data.error && data.error.message ? data.error.message : ("HTTP " + res.status);
+    throw new Error(res.status === 429 ? "Hết hạn mức miễn phí lúc này, chờ một lát rồi thử lại. (" + m + ")" : m);
+  }
+  const parts = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+  const text = parts ? parts.map(p => p.text || "").join("") : "";
+  if (!text) throw new Error("Model không trả lời. Thử lại hoặc đổi model.");
+  if (!wantJson) return text;
+  const clean = text.replace(/^\s*\x60{3}(?:json)?/i, "").replace(/\x60{3}\s*$/, "").trim();
+  try { return JSON.parse(clean); } catch (e) { throw new Error("Không đọc được câu trả lời của model."); }
+}
+async function loadModels() {
+  const res = await fetch(API + "models?pageSize=200", { headers: { "x-goog-api-key": mem.key } });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data && data.error && data.error.message ? data.error.message : ("HTTP " + res.status));
+  return (data.models || [])
+    .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
+    .map(m => m.name)
+    .filter(n => /gemini/i.test(n) && !/(image|tts|audio|live|embedding|vision|robotics|computer)/i.test(n));
+}
+function fillModels(list, selected) {
+  const sel = $("model"); sel.textContent = "";
+  if (!list.length) { sel.appendChild(new Option("(chưa tải danh sách)", "")); return; }
+  list.forEach(n => sel.appendChild(new Option(n.replace(/^models\//, ""), n)));
+  const pick = list.includes(selected) ? selected
+    : (list.find(n => /flash-lite/i.test(n) && /latest/i.test(n)) || list.find(n => /flash/i.test(n) && /latest/i.test(n))
+      || list.find(n => /flash/i.test(n) && !/preview|exp/i.test(n)) || list.find(n => /flash/i.test(n)) || list[0]);
+  sel.value = pick; mem.model = pick; store.set("model", pick);
+}
+
+/* ---------- Cài đặt ---------- */
+function initSettings() {
+  mem.key = store.get("key", ""); mem.model = store.get("model", ""); mem.rate = store.get("rate", 0.9);
+  $("key").value = mem.key; $("rate").value = mem.rate; $("rateVal").textContent = mem.rate;
+  fillModels(store.get("models", []), mem.model);
+  if (!mem.key) $("settings").classList.remove("hidden");
+  $("btnSettings").onclick = () => $("settings").classList.toggle("hidden");
+  $("btnCloseSet").onclick = () => $("settings").classList.add("hidden");
+  $("key").onchange = () => { mem.key = $("key").value.trim(); store.set("key", mem.key); };
+  $("model").onchange = () => { mem.model = $("model").value; store.set("model", mem.model); };
+  $("rate").oninput = () => { mem.rate = parseFloat($("rate").value); $("rateVal").textContent = mem.rate; store.set("rate", mem.rate); };
+  $("btnTest").onclick = async () => {
+    mem.key = $("key").value.trim(); store.set("key", mem.key);
+    const msg = $("setMsg"); msg.style.color = ""; msg.textContent = "Đang kiểm tra…";
+    try {
+      const list = await loadModels();
+      store.set("models", list); fillModels(list, mem.model);
+      msg.style.color = "var(--good)";
+      msg.textContent = list.length ? "Key hoạt động. Đã chọn model " + mem.model.replace(/^models\//, "") + "." : "Key hợp lệ nhưng không thấy model phù hợp.";
+    } catch (e) { msg.style.color = ""; msg.textContent = "Lỗi: " + e.message; }
+  };
+}
+
+/* ---------- Tab ---------- */
+function initTabs() {
+  document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+    document.querySelectorAll("nav button").forEach(x => x.setAttribute("aria-selected", x === b ? "true" : "false"));
+    ["reflex", "lesson", "role"].forEach(t => $("tab-" + t).classList.toggle("hidden", t !== b.dataset.tab));
+    try { speechSynthesis.cancel(); } catch (e) {}
+  });
+  if (!canListen) document.querySelectorAll(".mic").forEach(m => m.classList.add("hidden"));
+}
+
+/* ---------- Phản xạ ---------- */
+const rx = { list: [], i: 0, ok: 0, lats: [], weak: [], shownAt: 0, startedAt: 0, busy: false };
+function showStats() {
+  const best = store.get("best", null);
+  $("stBest").textContent = best === null ? "–" : best + "/8";
+  $("stRounds").textContent = store.get("rounds", 0);
+  $("stStreak").textContent = store.get("streak", { n: 0 }).n;
+  const weak = store.get("weak", []);
+  $("rxWeak").textContent = weak.length ? "Câu sẽ được hỏi lại: " + weak.slice(0, 4).join(" · ") : "";
+}
+function rxStart() {
+  const weak = store.get("weak", []);
+  const first = BANK.filter(b => weak.includes(b[0]));
+  const rest = shuffle(BANK.filter(b => !weak.includes(b[0])));
+  rx.list = shuffle(first.slice(0, 4).concat(rest).slice(0, 8));
+  rx.i = 0; rx.ok = 0; rx.lats = []; rx.weak = [];
+  $("rxStart").classList.add("hidden"); $("rxEnd").classList.add("hidden"); $("rxPlay").classList.remove("hidden");
+  rxShow();
+}
+function rxShow() {
+  const q = rx.list[rx.i];
+  $("rxBar").style.width = (rx.i / rx.list.length * 100) + "%";
+  $("rxCount").textContent = "Câu " + (rx.i + 1) + "/" + rx.list.length;
+  $("rxQ").textContent = q[0]; $("rxVi").textContent = q[2];
+  $("rxIn").value = ""; $("rxOut").textContent = ""; $("rxNextRow").classList.add("hidden");
+  $("rxSend").disabled = false; rx.startedAt = 0; rx.shownAt = 0; rx.busy = false;
+  speak(q[0], () => { rx.shownAt = performance.now(); });
+}
+function rxMarkStart() { if (!rx.startedAt) rx.startedAt = performance.now(); if (!rx.shownAt) rx.shownAt = rx.startedAt; }
+async function rxSubmit() {
+  const said = $("rxIn").value.trim();
+  if (!said || rx.busy) return;
+  rx.busy = true; rxMarkStart(); $("rxSend").disabled = true;
+  const q = rx.list[rx.i];
+  const lat = Math.max(0, (rx.startedAt - rx.shownAt) / 1000);
+  const out = $("rxOut"); out.textContent = "";
+  out.appendChild(el("div", "muted", "Đang chấm…"));
+  let r;
+  try {
+    r = await gemini(
+      "You are a patient English speaking coach for a Vietnamese engineer (CEFR A1-A2) who works at a cyclotron center producing radiopharmaceuticals. " +
+      "The learner answered a spoken workplace question; the answer came from speech recognition, so ignore punctuation and capitalization. " +
+      "Judge whether the answer is an understandable, relevant reply. Accept any true-to-life content; do not require the sample answer. " +
+      "Return JSON only: {\"ok\": boolean, \"better\": string, \"note_vi\": string}. " +
+      "\"better\" is the most natural short answer (max 10 words) keeping the learner's meaning. " +
+      "\"note_vi\" is ONE short sentence in Vietnamese naming the single most important fix, or praise if the answer is already natural.",
+      [{ role: "user", parts: [{ text: "Question: " + q[0] + "\nSample answer: " + q[1] + "\nLearner said: " + said }] }], true);
+  } catch (e) {
+    r = { ok: null, better: q[1], note_vi: "Không chấm được bằng Gemini: " + e.message + " Anh tự so với câu mẫu nhé." };
+  }
+  out.textContent = "";
+  const fast = lat <= 3;
+  if (r.ok === true) { out.appendChild(el("div", "verdict good", "Đạt" + (fast ? " · phản xạ nhanh" : ""))); rx.ok++; }
+  else if (r.ok === false) { out.appendChild(el("div", "verdict bad", "Chưa đạt")); rx.weak.push(q[0]); }
+  else out.appendChild(el("div", "verdict warn", "Tự kiểm tra"));
+  if (r.ok === true && !fast) rx.weak.push(q[0]);
+  rx.lats.push(lat);
+  out.appendChild(el("div", "muted", "Thời gian bắt đầu trả lời: " + lat.toFixed(1) + " giây"));
+  const fix = el("div", "fix"); fix.appendChild(el("b", "", "Câu tự nhiên")); fix.appendChild(el("div", "", String(r.better || q[1])));
+  out.appendChild(fix);
+  if (r.note_vi) out.appendChild(el("div", "muted", String(r.note_vi)));
+  const hear = el("button", "btn ghost", "🔊 Nghe câu đúng"); hear.style.marginTop = "10px";
+  hear.onclick = () => speak(String(r.better || q[1]));
+  out.appendChild(hear);
+  $("rxNext").textContent = rx.i + 1 < rx.list.length ? "Câu tiếp" : "Xem kết quả";
+  $("rxNextRow").classList.remove("hidden");
+}
+function rxNext() {
+  rx.i++;
+  if (rx.i < rx.list.length) return rxShow();
+  $("rxPlay").classList.add("hidden"); $("rxEnd").classList.remove("hidden");
+  const avg = rx.lats.length ? rx.lats.reduce((a, b) => a + b, 0) / rx.lats.length : 0;
+  $("endScore").textContent = rx.ok + "/" + rx.list.length;
+  $("endLat").textContent = avg.toFixed(1);
+  const weak = Array.from(new Set(rx.weak));
+  $("endWeak").textContent = weak.length ? "Cần luyện thêm: " + weak.join(" · ") : "Không có câu nào chậm hoặc sai. Rất tốt!";
+  store.set("weak", weak);
+  const best = store.get("best", null); if (best === null || rx.ok > best) store.set("best", rx.ok);
+  store.set("rounds", store.get("rounds", 0) + 1);
+  const st = store.get("streak", { n: 0, d: "" }), t = today();
+  if (st.d !== t) {
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    const yd = y.getFullYear() + "-" + (y.getMonth() + 1) + "-" + y.getDate();
+    store.set("streak", { n: st.d === yd ? st.n + 1 : 1, d: t });
+  }
+  showStats();
+}
+function initReflex() {
+  showStats();
+  $("btnRxGo").onclick = rxStart; $("rxAgain").onclick = rxStart;
+  $("rxSend").onclick = rxSubmit; $("rxNext").onclick = rxNext;
+  $("rxHear").onclick = () => speak(rx.list[rx.i][0]);
+  $("rxIn").addEventListener("input", rxMarkStart);
+  $("rxIn").addEventListener("keydown", e => { if (e.key === "Enter") rxSubmit(); });
+  $("rxMic").onclick = () => listen($("rxMic"), t => { $("rxIn").value = t; rxSubmit(); }, rxMarkStart);
+}
+
+/* ---------- Bài hôm nay ---------- */
+function currentDay() { return parseInt($("day").value, 10); }
+function renderLesson() {
+  const d = DAYS[currentDay()], list = $("lsList"); list.textContent = "";
+  d[1].forEach(([en, vi]) => {
+    const li = el("li"), box = el("div", "grow");
+    box.appendChild(el("div", "en", en)); box.appendChild(el("div", "vi", vi));
+    const res = el("div", "muted"); box.appendChild(res);
+    const play = el("button", "icon", "🔊"); play.setAttribute("aria-label", "Nghe"); play.onclick = () => speak(en);
+    li.appendChild(box); li.appendChild(play);
+    if (canListen) {
+      const mic = el("button", "icon mic", "🎤"); mic.setAttribute("aria-label", "Nói lại");
+      mic.onclick = () => listen(mic, t => {
+        const pct = Math.round(lcsRatio(en, t) * 100);
+        res.textContent = "Máy nghe: \"" + t + "\" · khớp " + pct + "%";
+        res.style.color = pct >= 80 ? "var(--good)" : pct >= 50 ? "var(--warn)" : "var(--bad)";
+      });
+      li.appendChild(mic);
+    }
+    list.appendChild(li);
+  });
+  store.set("day", currentDay());
+}
+function initLesson() {
+  const sel = $("day");
+  Object.keys(DAYS).forEach(k => sel.appendChild(new Option("Ngày " + k + " – " + DAYS[k][0], k)));
+  const saved = String(store.get("day", 1)); if (DAYS[saved]) sel.value = saved;
+  sel.onchange = () => { renderLesson(); rpReset(); };
+  if (!canListen) $("lsHint").textContent = "Bấm 🔊 để nghe rồi đọc to theo. (Trình duyệt này chưa cho dùng micro trong trang; xem ghi chú hướng dẫn.)";
+  renderLesson();
+}
+
+/* ---------- Đóng vai ---------- */
+const rp = { hist: [], busy: false };
+function rpSystem() {
+  const d = DAYS[currentDay()];
+  return "You are Alex, a friendly foreign colleague at a 30 MeV cyclotron center that produces radiopharmaceuticals. " +
+    "You are doing spoken role-play with a Vietnamese engineer learning English (CEFR A1-A2). Today's topic: " + d[0] + ". " +
+    "Target sentences the learner should get to use: " + d[1].map(s => s[0]).join(" | ") + ". " +
+    "Rules: speak only simple English, 4 to 9 words per sentence, ONE question per turn, stay in a realistic workplace scene. " +
+    "The learner's text comes from speech recognition; ignore punctuation. " +
+    "Return JSON only: {\"reply\": string, \"better\": string, \"note_vi\": string}. " +
+    "\"reply\" is your next line in the role-play ending with one question. " +
+    "\"better\" is a corrected natural version of the learner's last sentence, or empty string if it was fine or there is no learner sentence yet. " +
+    "\"note_vi\" is one short Vietnamese sentence explaining the fix, or empty string.";
+}
+function addMsg(who, text, sub) {
+  const m = el("div", "msg " + who, text);
+  if (sub) m.appendChild(el("small", "", sub));
+  $("chat").appendChild(m); m.scrollIntoView({ block: "nearest" });
+}
+async function rpTurn(userText) {
+  if (rp.busy) return; rp.busy = true; $("rpErr").textContent = ""; $("rpSend").disabled = true;
+  if (userText) { addMsg("me", userText); rp.hist.push({ role: "user", parts: [{ text: userText }] }); }
+  else rp.hist.push({ role: "user", parts: [{ text: "(Start the role-play with a greeting and one question.)" }] });
+  try {
+    const r = await gemini(rpSystem(), rp.hist, true);
+    rp.hist.push({ role: "model", parts: [{ text: JSON.stringify(r) }] });
+    const sub = r.better ? "Câu tự nhiên: " + r.better + (r.note_vi ? " — " + r.note_vi : "") : (r.note_vi || "");
+    addMsg("ai", String(r.reply || ""), sub);
+    speak(String(r.reply || ""));
+  } catch (e) { rp.hist.pop(); $("rpErr").textContent = "Lỗi: " + e.message; }
+  rp.busy = false; $("rpSend").disabled = false;
+}
+function rpReset() { rp.hist = []; $("chat").textContent = ""; $("rpErr").textContent = ""; }
+function initRole() {
+  const send = () => { const t = $("rpIn").value.trim(); if (!t && rp.hist.length) return; $("rpIn").value = ""; rpTurn(t); };
+  $("rpSend").onclick = send;
+  $("rpIn").addEventListener("keydown", e => { if (e.key === "Enter") send(); });
+  $("rpMic").onclick = () => listen($("rpMic"), t => { $("rpIn").value = t; send(); });
+  $("rpReset").onclick = () => { rpReset(); rpTurn(""); };
+}
+
+initSettings(); initTabs(); initReflex(); initLesson(); initRole();
+try { speechSynthesis.getVoices(); } catch (e) {}
+</script>
+</body>
+</html>
