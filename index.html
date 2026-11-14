@@ -103,6 +103,8 @@
     <select id="model"><option value="">(chưa tải danh sách)</option></select>
     <label for="rate">Tốc độ đọc: <span id="rateVal">0.9</span></label>
     <input type="range" id="rate" min="0.6" max="1.2" step="0.05" value="0.9" style="width:100%">
+    <div class="row" style="margin-top:10px"><button class="btn ghost" id="btnSnd">Kiểm tra âm thanh</button></div>
+    <div class="muted" id="sndMsg"></div>
     <div class="err" id="setMsg"></div>
     <div class="row" style="margin-top:12px"><button class="btn ghost" id="btnCloseSet">Xong</button></div>
   </section>
@@ -268,7 +270,7 @@ function speak(text, onend) {
         u.lang = "en-US"; u.rate = mem.rate; u.volume = 1;
         const vs = ss.getVoices();
         const v = vs.find(v => /^en[-_]US/i.test(v.lang) && v.localService) || vs.find(v => /^en[-_]US/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang));
-        if (v) u.voice = v;
+        if (v && !IOS) u.voice = v;
         u.onend = finish; u.onerror = finish;
         window.__utt = u;
         ss.speak(u);
@@ -278,6 +280,32 @@ function speak(text, onend) {
     };
     if (ss.speaking || ss.pending) { ss.cancel(); setTimeout(go, 120); } else go();
   } catch (e) { finish(); }
+}
+const IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+function soundTest() {
+  const out = $("sndMsg"), log = ["v3", window.navigator.standalone ? "mở từ MH chính" : "mở trong trình duyệt"];
+  const show = () => { out.textContent = log.join(" · "); };
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
+    const o = ac.createOscillator(), g = ac.createGain();
+    g.gain.value = 0.2; o.frequency.value = 660; o.connect(g); g.connect(ac.destination);
+    o.start(); o.stop(ac.currentTime + 0.4);
+    log.push("bíp: đã phát");
+  } catch (e) { log.push("bíp lỗi: " + e.message); }
+  try {
+    const ss = speechSynthesis;
+    log.push("số giọng: " + ss.getVoices().length);
+    const u = new SpeechSynthesisUtterance("Good morning. How are you?");
+    u.lang = "en-US"; u.volume = 1;
+    u.onstart = () => { log.push("đọc: bắt đầu"); show(); };
+    u.onend = () => { log.push("đọc: xong"); show(); };
+    u.onerror = e => { log.push("đọc lỗi: " + (e.error || "?")); show(); };
+    window.__utt = u;
+    if (ss.speaking || ss.pending) ss.cancel();
+    ss.speak(u);
+    try { ss.resume(); } catch (e) {}
+  } catch (e) { log.push("đọc lỗi: " + e.message); }
+  show();
 }
 function unlockSpeech() {
   try {
@@ -355,6 +383,7 @@ function initSettings() {
   if (!mem.key) $("settings").classList.remove("hidden");
   $("btnSettings").onclick = () => $("settings").classList.toggle("hidden");
   $("btnCloseSet").onclick = () => $("settings").classList.add("hidden");
+  $("btnSnd").onclick = soundTest;
   $("key").onchange = () => { mem.key = $("key").value.trim(); store.set("key", mem.key); };
   $("model").onchange = () => { mem.model = $("model").value; store.set("model", mem.model); };
   $("rate").oninput = () => { mem.rate = parseFloat($("rate").value); $("rateVal").textContent = mem.rate; store.set("rate", mem.rate); };
