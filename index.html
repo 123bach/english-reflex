@@ -101,6 +101,8 @@
     </div>
     <label for="model">Model</label>
     <select id="model"><option value="">(chưa tải danh sách)</option></select>
+    <label for="voice">Giọng đọc</label>
+    <select id="voice"><option value="">(mặc định của máy)</option></select>
     <label for="rate">Tốc độ đọc: <span id="rateVal">0.9</span></label>
     <input type="range" id="rate" min="0.6" max="1.2" step="0.05" value="0.9" style="width:100%">
     <div class="row" style="margin-top:10px"><button class="btn ghost" id="btnSnd">Kiểm tra âm thanh</button></div>
@@ -258,6 +260,20 @@ function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.
 function today() { const d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
 
 /* ---------- Giọng đọc ---------- */
+function dbg(msg) { if (window.__dbg) { window.__dbg.push(msg); $("sndMsg").textContent = window.__dbg.join(" · "); } }
+const IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+function enVoices() { try { return speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang)); } catch (e) { return []; } }
+function pickVoice() {
+  const vs = enVoices(), saved = store.get("voice", "");
+  return vs.find(v => v.voiceURI === saved) || vs.find(v => /samantha/i.test(v.name)) || vs.find(v => /^en[-_]US/i.test(v.lang)) || vs[0] || null;
+}
+function fillVoices() {
+  const sel = $("voice"), vs = enVoices();
+  if (!vs.length) return;
+  sel.textContent = "";
+  vs.forEach(v => sel.appendChild(new Option(v.name + " (" + v.lang + ")", v.voiceURI)));
+  const p = pickVoice(); if (p) sel.value = p.voiceURI;
+}
 function speak(text, onend) {
   let done = false;
   const finish = () => { if (!done) { done = true; if (onend) onend(); } };
@@ -265,56 +281,24 @@ function speak(text, onend) {
     if (!("speechSynthesis" in window)) return finish();
     const ss = speechSynthesis;
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US"; u.volume = 1;
-    if (!IOS) {
-      u.rate = mem.rate;
-      const vs = ss.getVoices();
-      const v = vs.find(v => /^en[-_]US/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang));
-      if (v) u.voice = v;
-    }
-    u.onend = finish; u.onerror = finish;
+    const v = pickVoice();
+    if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en-US";
+    u.volume = 1; u.rate = mem.rate;
+    u.onstart = () => dbg("đọc: bắt đầu");
+    u.onend = () => { dbg("đọc: xong"); finish(); };
+    u.onerror = e => { dbg("đọc lỗi: " + (e.error || "?")); finish(); };
     window.__utt = u;
     if (!IOS && (ss.speaking || ss.pending)) ss.cancel();
     ss.speak(u);
     if (!IOS) { try { ss.resume(); } catch (e) {} }
     setTimeout(finish, Math.max(2500, text.length * 110));
-  } catch (e) { finish(); }
-}
-const IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-function primeAudio() {
-  try {
-    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-    const ac = window.__ac || (window.__ac = new AC());
-    if (ac.state === "suspended") ac.resume();
-    const o = ac.createOscillator(), g = ac.createGain();
-    g.gain.value = 0.001; o.connect(g); g.connect(ac.destination);
-    o.start(); o.stop(ac.currentTime + 0.05);
-  } catch (e) {}
+  } catch (e) { dbg("đọc lỗi: " + e.message); finish(); }
 }
 function soundTest() {
-  const out = $("sndMsg"), log = ["v6", window.navigator.standalone ? "mở từ MH chính" : "mở trong trình duyệt"];
-  const show = () => { out.textContent = log.join(" · "); };
-  if (!IOS) try {
-    const AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
-    const o = ac.createOscillator(), g = ac.createGain();
-    g.gain.value = 0.2; o.frequency.value = 660; o.connect(g); g.connect(ac.destination);
-    o.start(); o.stop(ac.currentTime + 0.4);
-    log.push("bíp: đã phát");
-  } catch (e) { log.push("bíp lỗi: " + e.message); }
-  try {
-    const ss = speechSynthesis;
-    log.push("số giọng: " + ss.getVoices().length);
-    const u = new SpeechSynthesisUtterance("Good morning. How are you?");
-    u.lang = "en-US"; u.volume = 1;
-    u.onstart = () => { log.push("đọc: bắt đầu"); show(); };
-    u.onend = () => { log.push("đọc: xong"); show(); };
-    u.onerror = e => { log.push("đọc lỗi: " + (e.error || "?")); show(); };
-    window.__utt = u;
-    if (!IOS && (ss.speaking || ss.pending)) ss.cancel();
-    ss.speak(u);
-    if (!IOS) { try { ss.resume(); } catch (e) {} }
-  } catch (e) { log.push("đọc lỗi: " + e.message); }
-  show();
+  const v = pickVoice();
+  window.__dbg = ["v7", window.navigator.standalone ? "mở từ MH chính" : "mở trong trình duyệt", "số giọng: " + enVoices().length, "giọng: " + (v ? v.name : "mặc định")];
+  $("sndMsg").textContent = window.__dbg.join(" · ");
+  speak("Good morning. How are you?");
 }
 
 /* ---------- Nhận giọng nói ---------- */
@@ -384,6 +368,9 @@ function initSettings() {
   $("btnSettings").onclick = () => $("settings").classList.toggle("hidden");
   $("btnCloseSet").onclick = () => $("settings").classList.add("hidden");
   $("btnSnd").onclick = soundTest;
+  $("voice").onchange = () => { store.set("voice", $("voice").value); };
+  fillVoices();
+  try { speechSynthesis.onvoiceschanged = fillVoices; } catch (e) {}
   $("key").onchange = () => { mem.key = $("key").value.trim(); store.set("key", mem.key); };
   $("model").onchange = () => { mem.model = $("model").value; store.set("model", mem.model); };
   $("rate").oninput = () => { mem.rate = parseFloat($("rate").value); $("rateVal").textContent = mem.rate; store.set("rate", mem.rate); };
