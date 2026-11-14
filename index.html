@@ -186,6 +186,7 @@
   </section>
 </main>
 
+<script src="audio.js"></script>
 <script>
 "use strict";
 /* ---------- Dữ liệu ---------- */
@@ -293,9 +294,30 @@ function fillVoices() {
   vs.forEach(v => sel.appendChild(new Option(v.name + " (" + v.lang + ")", v.voiceURI)));
   const p = pickVoice(); if (p) sel.value = p.voiceURI;
 }
+function playClip(text, finish) {
+  try {
+    const urls = window.__urls || (window.__urls = {});
+    if (!urls[text]) {
+      const bin = atob(window.AUDIO[text]), b = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+      urls[text] = URL.createObjectURL(new Blob([b], { type: "audio/mpeg" }));
+    }
+    const a = window.__aud || (window.__aud = new Audio());
+    a.onended = () => { dbg("tệp: xong"); finish(); };
+    a.onerror = () => { dbg("tệp lỗi"); finish(); };
+    a.src = urls[text];
+    a.defaultPlaybackRate = mem.rate; a.playbackRate = mem.rate;
+    const p = a.play();
+    dbg("tệp: phát");
+    if (p && p.catch) p.catch(e => { dbg("tệp lỗi: " + e.name); finish(); });
+    setTimeout(finish, 9000);
+    return true;
+  } catch (e) { dbg("tệp lỗi: " + e.message); return false; }
+}
 function speak(text, onend) {
   let done = false;
   const finish = () => { if (!done) { done = true; if (onend) onend(); } };
+  if (window.AUDIO && window.AUDIO[text] && playClip(text, finish)) return;
   try {
     if (!("speechSynthesis" in window)) return finish();
     const ss = speechSynthesis;
@@ -316,7 +338,7 @@ function speak(text, onend) {
 }
 function soundTest() {
   const v = pickVoice();
-  window.__dbg = ["v8", window.navigator.standalone ? "mở từ MH chính" : "mở trong trình duyệt", "số giọng: " + enVoices().length, "giọng: " + (v ? v.name : "mặc định")];
+  window.__dbg = ["v9", "tệp âm thanh: " + (window.AUDIO ? Object.keys(window.AUDIO).length : "chưa có"), window.navigator.standalone ? "mở từ MH chính" : "mở trong trình duyệt", "số giọng: " + enVoices().length, "giọng: " + (v ? v.name : "mặc định")];
   $("sndMsg").textContent = window.__dbg.join(" · ");
   speak("Good morning. How are you?");
 }
@@ -477,8 +499,10 @@ async function rxSubmit() {
   const fix = el("div", "fix"); fix.appendChild(el("b", "", "Câu tự nhiên")); fix.appendChild(el("div", "", String(r.better || q[1])));
   out.appendChild(fix);
   if (r.note_vi) out.appendChild(el("div", "muted", String(r.note_vi)));
-  const hear = el("button", "btn ghost", "🔊 Nghe câu đúng"); hear.style.marginTop = "10px";
-  hear.onclick = () => speak(String(r.better || q[1]));
+  const bt = String(r.better || q[1]), useSample = IOS && window.AUDIO && !window.AUDIO[bt];
+  if (useSample) out.appendChild(el("div", "muted", "Câu mẫu: " + q[1]));
+  const hear = el("button", "btn ghost", useSample ? "🔊 Nghe câu mẫu" : "🔊 Nghe câu đúng"); hear.style.marginTop = "10px";
+  hear.onclick = () => speak(useSample ? q[1] : bt);
   out.appendChild(hear);
   $("rxNext").textContent = rx.i + 1 < rx.list.length ? "Câu tiếp" : "Xem kết quả";
   $("rxNextRow").classList.remove("hidden");
