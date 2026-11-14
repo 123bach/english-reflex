@@ -266,7 +266,6 @@ function speak(text, onend) {
     const ss = speechSynthesis;
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "en-US"; u.volume = 1;
-    if (IOS) primeAudio();
     if (!IOS) {
       u.rate = mem.rate;
       const vs = ss.getVoices();
@@ -275,9 +274,9 @@ function speak(text, onend) {
     }
     u.onend = finish; u.onerror = finish;
     window.__utt = u;
-    if (ss.speaking || ss.pending) ss.cancel();
+    if (!IOS && (ss.speaking || ss.pending)) ss.cancel();
     ss.speak(u);
-    try { ss.resume(); } catch (e) {}
+    if (!IOS) { try { ss.resume(); } catch (e) {} }
     setTimeout(finish, Math.max(2500, text.length * 110));
   } catch (e) { finish(); }
 }
@@ -293,9 +292,9 @@ function primeAudio() {
   } catch (e) {}
 }
 function soundTest() {
-  const out = $("sndMsg"), log = ["v5", window.navigator.standalone ? "mở từ MH chính" : "mở trong trình duyệt"];
+  const out = $("sndMsg"), log = ["v6", window.navigator.standalone ? "mở từ MH chính" : "mở trong trình duyệt"];
   const show = () => { out.textContent = log.join(" · "); };
-  try {
+  if (!IOS) try {
     const AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
     const o = ac.createOscillator(), g = ac.createGain();
     g.gain.value = 0.2; o.frequency.value = 660; o.connect(g); g.connect(ac.destination);
@@ -311,9 +310,9 @@ function soundTest() {
     u.onend = () => { log.push("đọc: xong"); show(); };
     u.onerror = e => { log.push("đọc lỗi: " + (e.error || "?")); show(); };
     window.__utt = u;
-    if (ss.speaking || ss.pending) ss.cancel();
+    if (!IOS && (ss.speaking || ss.pending)) ss.cancel();
     ss.speak(u);
-    try { ss.resume(); } catch (e) {}
+    if (!IOS) { try { ss.resume(); } catch (e) {} }
   } catch (e) { log.push("đọc lỗi: " + e.message); }
   show();
 }
@@ -325,7 +324,7 @@ let activeRec = null;
 function listen(micBtn, onText, onStart) {
   if (!canListen) return;
   if (activeRec) { try { activeRec.stop(); } catch (e) {} activeRec = null; return; }
-  try { speechSynthesis.cancel(); } catch (e) {}
+  try { if (speechSynthesis.speaking) speechSynthesis.cancel(); } catch (e) {}
   const rec = new SR();
   rec.lang = "en-US"; rec.interimResults = false; rec.maxAlternatives = 1;
   rec.onstart = () => { micBtn.classList.add("on"); if (onStart) onStart(); };
@@ -405,7 +404,7 @@ function initTabs() {
   document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
     document.querySelectorAll("nav button").forEach(x => x.setAttribute("aria-selected", x === b ? "true" : "false"));
     ["reflex", "lesson", "role"].forEach(t => $("tab-" + t).classList.toggle("hidden", t !== b.dataset.tab));
-    try { speechSynthesis.cancel(); } catch (e) {}
+    try { if (!IOS && speechSynthesis.speaking) speechSynthesis.cancel(); } catch (e) {}
   });
   if (!canListen) document.querySelectorAll(".mic").forEach(m => m.classList.add("hidden"));
 }
