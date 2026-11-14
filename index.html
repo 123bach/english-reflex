@@ -338,7 +338,7 @@ function speak(text, onend) {
 }
 function soundTest() {
   const v = pickVoice();
-  window.__dbg = ["v10", "tệp âm thanh: " + (window.AUDIO ? Object.keys(window.AUDIO).length : "chưa có"), window.navigator.standalone ? "mở từ MH chính" : "mở trong trình duyệt", "số giọng: " + enVoices().length, "giọng: " + (v ? v.name : "mặc định")];
+  window.__dbg = ["v11", "tệp âm thanh: " + (window.AUDIO ? Object.keys(window.AUDIO).length : "chưa có"), window.navigator.standalone ? "mở từ MH chính" : "mở trong trình duyệt", "số giọng: " + enVoices().length, "giọng: " + (v ? v.name : "mặc định")];
   $("sndMsg").textContent = window.__dbg.join(" · ");
   speak("Good morning. How are you?");
 }
@@ -363,18 +363,18 @@ function listen(micBtn, onText, onStart) {
 
 /* ---------- Gemini ---------- */
 const API = "https://generativelanguage.googleapis.com/v1beta/";
-async function gemini(system, contents, wantJson, retried) {
+async function gemini(system, contents, wantJson, retried, alt) {
   if (!mem.key || !mem.model) throw new Error("Chưa có API key hoặc chưa chọn model. Mở ⚙ Cài đặt.");
   const body = { contents, systemInstruction: { parts: [{ text: system }] }, generationConfig: { temperature: 0.4 } };
   if (wantJson) body.generationConfig.responseMimeType = "application/json";
-  const res = await fetch(API + mem.model + ":generateContent", {
+  const res = await fetch(API + (alt || mem.model) + ":generateContent", {
     method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": mem.key }, body: JSON.stringify(body)
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const m = data && data.error && data.error.message ? data.error.message : ("HTTP " + res.status);
     const sug = /no longer available/i.test(m) && m.match(/use (models\/[\w.\-]+)/);
-    if (sug && !retried && sug[1] !== mem.model) {
+    if (sug && !retried && !alt && sug[1] !== mem.model) {
       mem.model = sug[1]; store.set("model", mem.model);
       try {
         const sel = $("model");
@@ -382,6 +382,11 @@ async function gemini(system, contents, wantJson, retried) {
         sel.value = mem.model;
       } catch (e) {}
       return gemini(system, contents, wantJson, true);
+    }
+    if (!alt && (res.status === 503 || res.status === 500 || res.status === 429 || /high demand|overloaded|unavailable/i.test(m))) {
+      const ver = n => parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1]) || 0;
+      const alts = store.get("models", []).filter(n => /flash/i.test(n) && !/preview|exp/i.test(n) && n !== mem.model).sort((a, b) => ver(b) - ver(a));
+      for (const a of alts.slice(0, 3)) { try { return await gemini(system, contents, wantJson, true, a); } catch (e) {} }
     }
     throw new Error(res.status === 429 ? "Hết hạn mức miễn phí lúc này, chờ một lát rồi thử lại. (" + m + ")" : m);
   }
