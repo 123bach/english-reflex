@@ -338,7 +338,7 @@ function speak(text, onend) {
 }
 function soundTest() {
   const v = pickVoice();
-  window.__dbg = ["v9", "tệp âm thanh: " + (window.AUDIO ? Object.keys(window.AUDIO).length : "chưa có"), window.navigator.standalone ? "mở từ MH chính" : "mở trong trình duyệt", "số giọng: " + enVoices().length, "giọng: " + (v ? v.name : "mặc định")];
+  window.__dbg = ["v10", "tệp âm thanh: " + (window.AUDIO ? Object.keys(window.AUDIO).length : "chưa có"), window.navigator.standalone ? "mở từ MH chính" : "mở trong trình duyệt", "số giọng: " + enVoices().length, "giọng: " + (v ? v.name : "mặc định")];
   $("sndMsg").textContent = window.__dbg.join(" · ");
   speak("Good morning. How are you?");
 }
@@ -363,7 +363,7 @@ function listen(micBtn, onText, onStart) {
 
 /* ---------- Gemini ---------- */
 const API = "https://generativelanguage.googleapis.com/v1beta/";
-async function gemini(system, contents, wantJson) {
+async function gemini(system, contents, wantJson, retried) {
   if (!mem.key || !mem.model) throw new Error("Chưa có API key hoặc chưa chọn model. Mở ⚙ Cài đặt.");
   const body = { contents, systemInstruction: { parts: [{ text: system }] }, generationConfig: { temperature: 0.4 } };
   if (wantJson) body.generationConfig.responseMimeType = "application/json";
@@ -373,6 +373,16 @@ async function gemini(system, contents, wantJson) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const m = data && data.error && data.error.message ? data.error.message : ("HTTP " + res.status);
+    const sug = /no longer available/i.test(m) && m.match(/use (models\/[\w.\-]+)/);
+    if (sug && !retried && sug[1] !== mem.model) {
+      mem.model = sug[1]; store.set("model", mem.model);
+      try {
+        const sel = $("model");
+        if (!Array.from(sel.options).some(o => o.value === mem.model)) sel.appendChild(new Option(mem.model.replace(/^models\//, ""), mem.model));
+        sel.value = mem.model;
+      } catch (e) {}
+      return gemini(system, contents, wantJson, true);
+    }
     throw new Error(res.status === 429 ? "Hết hạn mức miễn phí lúc này, chờ một lát rồi thử lại. (" + m + ")" : m);
   }
   const parts = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
@@ -395,9 +405,10 @@ function fillModels(list, selected) {
   const sel = $("model"); sel.textContent = "";
   if (!list.length) { sel.appendChild(new Option("(chưa tải danh sách)", "")); return; }
   list.forEach(n => sel.appendChild(new Option(n.replace(/^models\//, ""), n)));
+  const ver = n => parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1]) || 0;
+  const stable = list.filter(n => /flash/i.test(n) && !/lite|preview|exp/i.test(n)).sort((a, b) => ver(b) - ver(a));
   const pick = list.includes(selected) ? selected
-    : (list.find(n => /flash-lite/i.test(n) && /latest/i.test(n)) || list.find(n => /flash/i.test(n) && /latest/i.test(n))
-      || list.find(n => /flash/i.test(n) && !/preview|exp/i.test(n)) || list.find(n => /flash/i.test(n)) || list[0]);
+    : (list.find(n => /gemini-flash-latest/i.test(n)) || stable[0] || list.find(n => /flash/i.test(n)) || list[0]);
   sel.value = pick; mem.model = pick; store.set("model", pick);
 }
 
